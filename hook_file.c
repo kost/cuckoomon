@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctype.h>
 #include <windows.h>
 #include <shlwapi.h>
+#include <string.h>
 #include "hooking.h"
 #include "ntapi.h"
 #include "log.h"
@@ -503,3 +504,39 @@ HOOKDEF(BOOL, WINAPI, DeleteFileW,
     LOQ("u", "FileName", lpFileName);
     return ret;
 }
+
+/* Hardened */
+HOOKDEF(DWORD, WINAPI, GetFileAttributesA,
+  __in      LPCTSTR lpFileName
+) {
+    BOOL ret;
+    if (strstr(lpFileName, "VBox") != NULL) {
+        ret = INVALID_FILE_ATTRIBUTES;
+        LOQ("s", "Hardening", "Faked GetFileAttributesA return");
+    }
+    else {
+        ret = Old_GetFileAttributesA(lpFileName);
+    }
+    LOQ("s", "GetFileAttributesA", lpFileName);
+    return ret;
+}
+
+/* Hardened */
+HOOKDEF(DWORD, WINAPI, GetFileAttributesExA,
+  __in      LPCTSTR lpFileName,
+  __in      GET_FILEEX_INFO_LEVELS fInfoLevelId,
+  __out     LPVOID lpFileInformation
+) {
+    BOOL ret;
+    if (strstr(lpFileName, "VBox") != NULL) {
+        ret = 0;
+        LOQ("s", "Hardening", "Faked GetFileAttributesExA return");
+    }
+    else {
+        ret = Old_GetFileAttributesExA(lpFileName, fInfoLevelId,
+            lpFileInformation);
+    }
+    LOQ("s", "GetFileAttributesExA", lpFileName);
+    return ret;
+}
+

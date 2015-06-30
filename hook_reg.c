@@ -18,12 +18,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
 #include <windows.h>
+#include <string.h>
 #include "hooking.h"
 #include "ntapi.h"
 #include "log.h"
 
 static IS_SUCCESS_LONGREG();
 
+/* Hardened */
 HOOKDEF(LONG, WINAPI, RegOpenKeyExA,
     __in        HKEY hKey,
     __in_opt    LPCTSTR lpSubKey,
@@ -31,8 +33,39 @@ HOOKDEF(LONG, WINAPI, RegOpenKeyExA,
     __in        REGSAM samDesired,
     __out       PHKEY phkResult
 ) {
-    LONG ret = Old_RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired,
-        phkResult);
+    LONG ret;
+    if (strstr(lpSubKey, "VmWare") != NULL) {
+	ret = 1;
+	LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
+    }
+    if (strstr(lpSubKey, "VirtualBox") != NULL) {
+        ret = 1;
+        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
+    }
+    else if (strstr(lpSubKey, "ControlSet") != NULL) {
+        ret = 1;
+        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
+    }
+     else if (strstr(lpSubKey, "VBOX") != NULL) {
+        ret = 1;
+        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
+    }
+    else if (strstr(lpSubKey, "vbox") != NULL) {
+        ret = 1;
+        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
+    }
+    else if (strstr(lpSubKey, "oracle") != NULL) {
+        ret = 1;
+        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
+    }
+    else if (strstr(lpSubKey, "virtualbox") != NULL) {
+        ret = 1;
+        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
+    }
+    else {
+        ret = Old_RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired,
+            phkResult);
+    }
     LOQ("psP", "Registry", hKey, "SubKey", lpSubKey, "Handle", phkResult);
     return ret;
 }
@@ -241,6 +274,7 @@ HOOKDEF(LONG, WINAPI, RegSetValueExW,
     return ret;
 }
 
+/* Hardened */
 HOOKDEF(LONG, WINAPI, RegQueryValueExA,
     __in         HKEY hKey,
     __in_opt     LPCTSTR lpValueName,
@@ -250,8 +284,29 @@ HOOKDEF(LONG, WINAPI, RegQueryValueExA,
     __inout_opt  LPDWORD lpcbData
 ) {
     ENSURE_DWORD(lpType);
-    LONG ret = Old_RegQueryValueExA(hKey, lpValueName, lpReserved, lpType,
-        lpData, lpcbData);
+    LONG ret;
+    /* HARDWARE\\Description\\System "SystemBiosVersion" */
+    if (strstr(lpValueName, "SystemBiosVersion") != NULL) {
+        ret = ERROR_SUCCESS;
+        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
+    }
+    /* HARDWARE\\DEVICEMAP\\Scsi\\Scsi Port 0\\Scsi Bus 0\\Target Id 0\\Logical Unit Id 0 "Identifier" */
+    else if (strstr(lpValueName, "Identifier") != NULL) {
+        ret = ERROR_SUCCESS;
+        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
+    }
+    else if (strstr(lpValueName, "ProductId") != NULL) {
+        ret = ERROR_SUCCESS;
+        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
+    }
+     else if (strstr(lpValueName, "VideoBiosVersion") != NULL) {
+        ret = ERROR_SUCCESS;
+        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
+    }
+    else {
+        ret = Old_RegQueryValueExA(hKey, lpValueName, lpReserved, lpType,
+            lpData, lpcbData);
+    }
     if(ret == ERROR_SUCCESS && lpType != NULL && lpData != NULL &&
             lpcbData != NULL) {
         LOQ("psr", "Handle", hKey, "ValueName", lpValueName,
@@ -279,6 +334,10 @@ HOOKDEF(LONG, WINAPI, RegQueryValueExW,
             lpcbData != NULL) {
         LOQ("puR", "Handle", hKey, "ValueName", lpValueName,
             "Data", *lpType, *lpcbData, lpData);
+    }
+     else if (wcsstr(lpValueName, L"VideoBiosVersion") != NULL) {
+        ret = ERROR_SUCCESS;
+        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
     }
     else {
         LOQ2("puLL", "Handle", hKey, "ValueName", lpValueName,

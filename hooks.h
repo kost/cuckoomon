@@ -212,6 +212,16 @@ extern HOOKDEF(BOOL, WINAPI, DeleteFileW,
     __in  LPWSTR lpFileName
 );
 
+extern HOOKDEF(DWORD, WINAPI, GetFileAttributesA,
+  __in      LPCTSTR lpFileName
+);
+
+extern HOOKDEF(DWORD, WINAPI, GetFileAttributesExA,
+  __in      LPCTSTR lpFileName,
+  __in      GET_FILEEX_INFO_LEVELS fInfoLevelId,
+  __out     LPVOID lpFileInformation
+);
+
 //
 // Registry Hooks
 //

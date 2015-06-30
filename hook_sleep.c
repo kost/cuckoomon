@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static IS_SUCCESS_NTSTATUS();
 
 // skipping sleep calls is done while this variable is set to true
-static int sleep_skip_active = 1;
+static int sleep_skip_active = 0;
 
 // the amount of time skipped, in 100-nanosecond
 static LARGE_INTEGER time_skipped;

@@ -76,6 +76,9 @@ static hook_t g_hooks[] = {
     HOOK(kernel32, RemoveDirectoryA),
     HOOK(kernel32, RemoveDirectoryW),
 
+    HOOK(kernel32, GetFileAttributesA),
+    HOOK(kernel32, GetFileAttributesExA),
+
     // lowest variant of MoveFile()
     HOOK(kernel32, MoveFileWithProgressW),
 

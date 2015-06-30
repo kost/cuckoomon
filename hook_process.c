@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdio.h>
 #include <windows.h>
+#include <tlhelp32.h>
 #include "hooking.h"
 #include "ntapi.h"
 #include "log.h"
@@ -27,6 +28,52 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hook_sleep.h"
 
 static IS_SUCCESS_NTSTATUS();
+
+HOOKDEF(HANDLE, WINAPI, CreateToolhelp32Snapshot,
+	__in DWORD dwFlags,
+	__in DWORD th32ProcessID
+) {
+	HANDLE ret = Old_CreateToolhelp32Snapshot(dwFlags, th32ProcessID);
+
+	LOQ("pp", "Flags", dwFlags, "ProcessId", th32ProcessID);
+
+	return ret;
+}
+
+HOOKDEF(BOOL, WINAPI, Process32NextW,
+	__in HANDLE hSnapshot,
+	__out LPPROCESSENTRY32W lppe
+	) {
+	BOOL ret = Old_Process32NextW(hSnapshot, lppe);
+
+	while (ret && lppe && is_protected_pid(lppe->th32ProcessID))
+		ret = Old_Process32NextW(hSnapshot, lppe);
+
+	if (ret) {
+		LOQ("sp","ProcessName", lppe->szExeFile, "ProcessId", lppe->th32ProcessID);
+	} else {
+		LOQ("s","process", "");
+	}
+	return ret;
+}
+
+HOOKDEF(BOOL, WINAPI, Process32FirstW,
+	__in HANDLE hSnapshot,
+	__out LPPROCESSENTRY32W lppe
+	) {
+	BOOL ret = Old_Process32FirstW(hSnapshot, lppe);
+
+	while (ret && lppe && is_protected_pid(lppe->th32ProcessID))
+		ret = Old_Process32NextW(hSnapshot, lppe);
+
+	if (ret) {
+		LOQ("sp", "ProcessName", lppe->szExeFile, "ProcessId", lppe->th32ProcessID);
+	} else {
+		LOQ("s", "process", "");
+	}
+
+	return ret;
+}
 
 HOOKDEF(NTSTATUS, WINAPI, NtCreateProcess,
     __out       PHANDLE ProcessHandle,
